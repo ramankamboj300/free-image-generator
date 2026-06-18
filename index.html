@@ -1,0 +1,2047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Generator Hub</title>
+    <!-- Lucide Icons for clean dashboard elements -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            /* Dark Theme Colors (Default) */
+            --bg-base: #0a0b10;
+            --bg-surface: rgba(20, 21, 33, 0.6);
+            --bg-card: rgba(30, 32, 50, 0.45);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --accent-primary: #8b5cf6;
+            --accent-glow: rgba(139, 92, 246, 0.45);
+            --accent-secondary: #3b82f6;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --glass-blur: blur(16px);
+            --transition-speed: 0.3s;
+            --sidebar-width: 260px;
+        }
+
+        [data-theme="light"] {
+            /* Light Theme Colors */
+            --bg-base: #f3f4f6;
+            --bg-surface: rgba(255, 255, 255, 0.7);
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --border-color: rgba(0, 0, 0, 0.08);
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --text-muted: #9ca3af;
+            --accent-primary: #6d28d9;
+            --accent-glow: rgba(109, 40, 217, 0.25);
+            --accent-secondary: #2563eb;
+            --success: #059669;
+            --error: #dc2626;
+            --warning: #d97706;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            transition: background-color var(--transition-speed) ease;
+            height: 100vh;
+            display: flex;
+        }
+
+        /* Webkit scrollbar customization */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: var(--bg-surface);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+        }
+
+        .glass-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-primary);
+            box-shadow: 0 8px 24px var(--accent-glow);
+        }
+
+        /* Sidebar Styling */
+        aside {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            border-radius: 0;
+            border-left: none;
+            border-top: none;
+            border-bottom: none;
+            transition: transform var(--transition-speed) ease;
+        }
+
+        .sidebar-brand {
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 1.25rem;
+            letter-spacing: -0.025em;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-nav {
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(139, 92, 246, 0.15), transparent);
+            border-left: 3px solid var(--accent-primary);
+            padding-left: 13px;
+        }
+
+        /* Main Workspace Area */
+        main {
+            margin-left: var(--sidebar-width);
+            flex-grow: 1;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: margin var(--transition-speed) ease;
+        }
+
+        /* Top Bar Navigation */
+        .top-bar {
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            border-radius: 0;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            z-index: 90;
+        }
+
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .top-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .btn-icon:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--accent-primary);
+        }
+
+        /* Workspace Grid Split Layout */
+        .workspace-content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .workspace-content.active {
+            display: block;
+        }
+
+        /* Dashboard Split Screen View */
+        .generator-split {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 20px;
+            height: calc(100vh - 110px);
+        }
+
+        .left-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .right-output {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        /* Control Form Elements */
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 14px;
+        }
+
+        .control-group-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        textarea, select, input[type="text"], input[type="number"] {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 10px;
+            color: var(--text-primary);
+            outline: none;
+            font-size: 0.85rem;
+            transition: all var(--transition-speed) ease;
+        }
+
+        textarea:focus, select:focus, input[type="text"]:focus, input[type="number"]:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 8px rgba(139, 92, 246, 0.2);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* Button configurations */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all var(--transition-speed) ease;
+            box-shadow: 0 4px 12px var(--accent-glow);
+            font-size: 0.9rem;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.95;
+            transform: scale(1.02);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--error), #b91c1c);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all var(--transition-speed) ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all var(--transition-speed) ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-random {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .btn-random:hover {
+            border-color: var(--accent-primary);
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(59, 130, 246, 0.4));
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .action-bar {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 10px;
+        }
+
+        /* Console Log View */
+        .console-container {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.75rem;
+            padding: 10px;
+            height: 100px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .console-line {
+            display: flex;
+            gap: 6px;
+        }
+
+        .console-line .time {
+            color: var(--text-muted);
+        }
+
+        .console-line.info { color: var(--accent-secondary); }
+        .console-line.success { color: var(--success); }
+        .console-line.error { color: var(--error); }
+        .console-line.warn { color: var(--warning); }
+
+        /* Output Canvas Area */
+        .output-sandbox {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            border-radius: 16px;
+            overflow-y: auto;
+            min-height: 350px;
+            padding: 16px;
+        }
+
+        .output-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 20px;
+        }
+
+        .output-placeholder i {
+            width: 48px;
+            height: 48px;
+            stroke-width: 1.5;
+        }
+
+        /* Dynamic Grid Layout for Batch Mode */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            width: 100%;
+        }
+
+        /* Image Display Cards */
+        .image-card {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            background: #111;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-card img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: transform var(--transition-speed) ease;
+        }
+
+        .image-card:hover img {
+            transform: scale(1.02);
+        }
+
+        .image-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 75%, transparent 100%);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            opacity: 0;
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        .image-card:hover .image-overlay {
+            opacity: 1;
+        }
+
+        .image-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .image-meta {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.75);
+            word-break: break-all;
+        }
+
+        .image-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .image-actions button {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .image-actions button:hover {
+            background: var(--accent-primary);
+            transform: scale(1.1);
+        }
+
+        /* Loading & Skeleton Shimmer */
+        .batch-skeleton {
+            width: 100%;
+            height: 100%;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            background: linear-gradient(90deg, var(--bg-card) 25%, rgba(255,255,255,0.05) 50%, var(--bg-card) 75%);
+            background-size: 200% 100%;
+            animation: loading-shimmer 1.5s infinite;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            text-align: center;
+        }
+
+        @keyframes loading-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .spinner-loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top: 3px solid var(--accent-primary);
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast System */
+        #toast-container {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: calc(100vw - 32px);
+        }
+
+        .toast {
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 500;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.45);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transform: translateX(120%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(8px);
+        }
+
+        .toast.success { background: rgba(16, 185, 129, 0.9); border: 1px solid #10b981; }
+        .toast.error { background: rgba(239, 68, 68, 0.9); border: 1px solid #ef4444; }
+        .toast.warning { background: rgba(245, 158, 11, 0.9); border: 1px solid #f59e0b; }
+        .toast.info { background: rgba(59, 130, 246, 0.9); border: 1px solid #3b82f6; }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        /* Providers View styling */
+        .providers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .provider-card {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .provider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .provider-title-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .provider-badge {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-weight: 700;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            width: fit-content;
+        }
+
+        .provider-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .provider-status.online { background-color: var(--success); box-shadow: 0 0 8px var(--success); }
+        .provider-status.offline { background-color: var(--error); box-shadow: 0 0 8px var(--error); }
+        .provider-status.checking { background-color: var(--warning); }
+
+        .provider-meta-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .provider-meta-item {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Models Grid view */
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .model-card {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+        }
+
+        .model-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: var(--accent-primary);
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* History & Favorites layouts */
+        .items-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+        }
+
+        /* Modal Overlay for Fullscreen viewing */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .modal-content {
+            position: relative;
+            max-width: 95%;
+            max-height: 95%;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 85vh;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: -36px;
+            right: 0;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.25rem;
+            cursor: pointer;
+        }
+
+        .page-header {
+            margin-bottom: 16px;
+        }
+
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Filters and control elements top bar */
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filter-bar select, .filter-bar input {
+            width: auto;
+            min-width: 160px;
+        }
+
+        /* Mobile Utility Panel Trigger */
+        .mobile-panel-trigger {
+            display: none;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 1024px) {
+            .generator-split {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            .left-controls {
+                overflow-y: visible;
+                height: auto;
+            }
+            .mobile-panel-trigger {
+                display: flex;
+            }
+            .left-controls.collapsed {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            aside {
+                transform: translateX(-100%);
+            }
+            aside.open {
+                transform: translateX(0);
+            }
+            main {
+                margin-left: 0;
+            }
+            .menu-toggle {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <!-- Global Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Interactive Lightbox Modal -->
+    <div class="modal-overlay" id="image-modal" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeModal()"><i data-lucide="x"></i></button>
+            <img src="" id="modal-img" alt="Zoom Preview">
+        </div>
+    </div>
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="glass-panel" id="sidebar">
+        <div class="sidebar-brand">
+            <i data-lucide="sparkles"></i>
+            <span>AI Gen Hub</span>
+        </div>
+        <div class="sidebar-nav">
+            <a class="nav-item active" data-target="dashboard" onclick="switchTab('dashboard')">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+            <a class="nav-item" data-target="providers" onclick="switchTab('providers')">
+                <i data-lucide="layers"></i>
+                <span>Providers</span>
+            </a>
+            <a class="nav-item" data-target="models" onclick="switchTab('models')">
+                <i data-lucide="cpu"></i>
+                <span>Model Browser</span>
+            </a>
+            <a class="nav-item" data-target="history" onclick="switchTab('history')">
+                <i data-lucide="history"></i>
+                <span>History</span>
+            </a>
+            <a class="nav-item" data-target="favorites" onclick="switchTab('favorites')">
+                <i data-lucide="heart"></i>
+                <span>Favorites</span>
+            </a>
+            <a class="nav-item" data-target="keys" onclick="switchTab('keys')">
+                <i data-lucide="key"></i>
+                <span>API Keys</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN INTERACTIVE WORKSPACE -->
+    <main>
+        <!-- Top Navigation -->
+        <nav class="top-bar glass-panel">
+            <div class="top-bar-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">
+                    <i data-lucide="menu"></i>
+                </button>
+                <div style="font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="sparkles" style="color: var(--accent-primary);"></i>
+                    <span>Creator Workspace</span>
+                </div>
+            </div>
+            <div class="top-bar-actions">
+                <button class="btn-icon" title="Refresh Providers" onclick="pingAllProviders()">
+                    <i data-lucide="refresh-cw"></i>
+                </button>
+                <button class="btn-icon" title="Toggle Theme" onclick="toggleTheme()">
+                    <i data-lucide="sun" id="theme-icon"></i>
+                </button>
+            </div>
+        </nav>
+
+        <!-- DASHBOARD CONTAINER -->
+        <div class="workspace-content active" id="dashboard">
+            <!-- Mobile Toggle for settings panel visibility -->
+            <button class="btn-secondary mobile-panel-trigger" onclick="toggleMobileControls()">
+                <i data-lucide="sliders"></i>
+                <span id="mobile-trigger-text">Collapse Control Panel</span>
+            </button>
+
+            <div class="generator-split">
+                <!-- Left-side panel configurations -->
+                <div class="left-controls" id="control-panel">
+                    <!-- Text Configurations -->
+                    <div class="glass-card control-group">
+                        <div class="control-group-title">
+                            <span>Image Prompts</span>
+                            <button type="button" class="btn-random" onclick="setRandomPrompt()">
+                                <i data-lucide="shuffle"></i>
+                                <span>Random</span>
+                            </button>
+                        </div>
+                        <label for="prompt">Positive Prompt</label>
+                        <textarea id="prompt" placeholder="A futuristic glass cyberpunk tower inside a mystical neon nebula cloud, 8k resolution, photorealistic cinematic lighting..."></textarea>
+                        
+                        <label for="negative_prompt">Negative Prompt (where supported)</label>
+                        <textarea id="negative_prompt" placeholder="blurry, low quality, distorted, extra limbs, ugly, text..."></textarea>
+                    </div>
+
+                    <!-- Model/Engine Settings -->
+                    <div class="glass-card control-group">
+                        <div class="control-group-title">
+                            <span>Generator Core</span>
+                            <i data-lucide="sliders"></i>
+                        </div>
+                        <label for="provider-select">Provider Engine</label>
+                        <select id="provider-select" onchange="updateModelDropdown()"></select>
+
+                        <label for="model-select">Target Model Architecture</label>
+                        <select id="model-select"></select>
+
+                        <div class="grid-2col">
+                            <div>
+                                <label for="aspect-ratio">Aspect Ratio</label>
+                                <select id="aspect-ratio" onchange="adjustDimensions()">
+                                    <option value="1:1">1:1 Square</option>
+                                    <option value="16:9">16:9 Cinema</option>
+                                    <option value="9:16">9:16 Portrait</option>
+                                    <option value="4:3">4:3 Photo</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="output-format">Format</label>
+                                <select id="output-format">
+                                    <option value="jpg">JPG</option>
+                                    <option value="png">PNG</option>
+                                    <option value="webp">WEBP</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid-2col">
+                            <div>
+                                <label for="img-width">Width (px)</label>
+                                <input type="number" id="img-width" value="512" min="128" max="2048" step="64">
+                            </div>
+                            <div>
+                                <label for="img-height">Height (px)</label>
+                                <input type="number" id="img-height" value="512" min="128" max="2048" step="64">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fine-tuning Hyperparameters -->
+                    <div class="glass-card control-group">
+                        <div class="control-group-title">
+                            <span>Advanced Config</span>
+                            <i data-lucide="sliders-horizontal"></i>
+                        </div>
+                        
+                        <div class="grid-2col">
+                            <div>
+                                <label for="gen-seed">Seed</label>
+                                <input type="number" id="gen-seed" value="-1" placeholder="-1 = Random">
+                            </div>
+                            <div>
+                                <label for="image-count">Batch Count</label>
+                                <select id="image-count">
+                                    <option value="1">1 Image</option>
+                                    <option value="2">2 Images (Batch)</option>
+                                    <option value="3">3 Images (Batch)</option>
+                                    <option value="4">4 Images (Batch)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trigger Elements -->
+                    <div class="action-bar">
+                        <button class="btn-primary" id="generate-btn" onclick="executeGeneration()">
+                            <i data-lucide="play"></i>
+                            <span>Generate batch</span>
+                        </button>
+                        <button class="btn-secondary" title="Clear configuration settings" onclick="clearDashboardConfig()">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </div>
+
+                    <!-- Core Debug Log Shell -->
+                    <div class="console-container" id="terminal-console">
+                        <div class="console-line info">
+                            <span class="time">[00:00:00]</span>
+                            <span>System active. Pollinations AI and Deepinfra engines loaded cleanly.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right-side Live Sandbox Render Output -->
+                <div class="right-output">
+                    <div class="glass-panel output-sandbox" id="render-sandbox">
+                        <div class="output-placeholder">
+                            <i data-lucide="image"></i>
+                            <h3>Visual Canvas Output</h3>
+                            <p>Design a prompt on the left pane and hit Generate to render graphics instantly.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PROVIDERS DASHBOARD -->
+        <div class="workspace-content" id="providers">
+            <div class="page-header">
+                <h1>AI Providers Architecture</h1>
+                <p>Monitor operational health, free-tier limitations, speed, and latency of current engines.</p>
+            </div>
+            <div class="providers-grid" id="providers-container"></div>
+        </div>
+
+        <!-- MODEL BROWSER -->
+        <div class="workspace-content" id="models">
+            <div class="page-header">
+                <h1>Image Model Browser</h1>
+                <p>Browse, query, filter, and choose through available models offered directly through the hub.</p>
+            </div>
+            <div class="filter-bar">
+                <input type="text" id="model-search" placeholder="Filter models by name..." class="glass-card" oninput="filterModels()">
+                <select id="model-filter-provider" class="glass-card" onchange="filterModels()">
+                    <option value="all">All Providers</option>
+                </select>
+            </div>
+            <div class="models-grid" id="models-container"></div>
+        </div>
+
+        <!-- GENERATED IMAGE HISTORY -->
+        <div class="workspace-content" id="history">
+            <div class="page-header">
+                <h1>Local Sandbox History (Sync Cookies)</h1>
+                <p>Saved inside Cookies (Metadata) and LocalStorage (High-capacity fallback) directly on your device.</p>
+            </div>
+            <div class="filter-bar">
+                <button class="btn-danger" style="padding: 8px 16px;" onclick="clearAllHistory()">
+                    <i data-lucide="trash-2"></i>
+                    <span>Clear Cache & Cookies</span>
+                </button>
+            </div>
+            <div class="items-gallery" id="history-gallery"></div>
+        </div>
+
+        <!-- FAVORITED IMAGES -->
+        <div class="workspace-content" id="favorites">
+            <div class="page-header">
+                <h1>Favorites Catalog</h1>
+                <p>Access customized outputs and saved generations tagged for fast recovery.</p>
+            </div>
+            <div class="items-gallery" id="favorites-gallery"></div>
+        </div>
+
+        <!-- API KEY SETTINGS -->
+        <div class="workspace-content" id="keys">
+            <div class="page-header">
+                <h1>Local Key Integration</h1>
+                <p>Provide API keys to access Deepinfra endpoints. Kept locally inside this browser session.</p>
+            </div>
+            <div class="glass-panel" style="padding: 24px; max-width: 650px; display: flex; flex-direction: column; gap: 16px;" id="keys-manager-panel"></div>
+        </div>
+    </main>
+
+    <!-- Vanilla Script Core Controller -->
+    <script>
+        // Core Config Data Model (Pollinations & Deepinfra Only)
+        const PROVIDERS_CONFIG = [
+            {
+                id: "pollinations",
+                name: "Pollinations AI",
+                isFree: true,
+                badge: "No Key Required",
+                requiresKey: false,
+                keyEnvName: "",
+                docLink: "https://pollinations.ai/",
+                speed: "Fast (2-4s)",
+                limits: "Unlimited Free Requests",
+                models: [
+                    { id: "flux", name: "Flux.1 Schnell", style: "Standard Dynamic, High-Fidelity", resolution: "1024x1024" },
+                    { id: "flux-realism", name: "Flux Realism", style: "Hyperrealistic Digital Photo", resolution: "1024x1024" },
+                    { id: "flux-anime", name: "Flux Anime", style: "Classic Manga & Animated Visuals", resolution: "1024x1024" },
+                    { id: "flux-3d", name: "Flux 3D/CGI Render", style: "Unreal Engine Rendering", resolution: "1024x1024" },
+                    { id: "any-dark", name: "Any Dark Style", style: "Grungy cinematic shadow stylization", resolution: "1024x1024" },
+                    { id: "turbo", name: "SDXL Turbo Speed", style: "Accelerated diffusion model", resolution: "512x512" }
+                ],
+                apiEndpoint: "https://image.pollinations.ai/p/{prompt}?width={width}&height={height}&seed={seed}&nologo=true&model={model}"
+            },
+            {
+                id: "deepinfra",
+                name: "DeepInfra",
+                isFree: true,
+                badge: "API Key Required",
+                requiresKey: true,
+                keyEnvName: "DeepInfra API Token",
+                docLink: "https://deepinfra.com/docs",
+                speed: "Lightning Fast (1.5-3s)",
+                limits: "Free tier model allotments with key",
+                models: [
+                    { id: "black-forest-labs/FLUX-1-schnell", name: "Flux.1 Schnell (DeepInfra)", style: "Hyperrealistic rapid rendering", resolution: "1024x1024" },
+                    { id: "stabilityai/sdxl", name: "SDXL Stable", style: "High contrast lighting outputs", resolution: "1024x1024" }
+                ],
+                apiEndpoint: "https://api.deepinfra.com/v1/openai/images/generations"
+            }
+        ];
+
+        // Random Prompts Dataset
+        const RANDOM_PROMPTS = [
+            "A beautiful 24-year-old Indian college girl with long black hair, wearing a casual oversized hoodie and jeans, walking through a modern university campus, ultra-realistic, cinematic lighting, 8K DSLR photography.",
+            "A confident 30-year-old Indian woman with a curvy figure, wearing a stylish black crop top and blue denim jeans, standing in a luxury apartment with warm golden-hour lighting, photorealistic, highly detailed.",
+            "A tall 27-year-old Indian fashion model with a slim athletic body, wearing an elegant white summer dress in a flower garden, natural sunlight, ultra-realistic skin texture, professional fashion photography.",
+            "A 32-year-old Indian businesswoman with shoulder-length black hair, wearing a premium navy blue blazer and trousers in a modern office, confident pose, realistic lighting, DSLR portrait, 8K quality.",
+            "A cute 22-year-old Indian girl with a petite body, wearing a pastel pink oversized sweatshirt and white sneakers in a cozy café, soft daylight, photorealistic, vibrant colors.",
+            "A fit 26-year-old Indian fitness trainer with a toned physique, wearing premium activewear in a luxury gym, dynamic pose, realistic muscles, cinematic lighting, ultra-detailed photography.",
+            "A graceful 35-year-old Indian woman with a chubby body shape, wearing a beautiful maroon saree with traditional jewelry, standing in a royal palace courtyard, golden-hour lighting, masterpiece quality.",
+            "A stylish 29-year-old Indian biker girl with short black hair, wearing a black leather jacket, white crop top, ripped jeans, and boots beside a superbike on a city street at night, neon lighting, photorealistic.",
+            "A cheerful 25-year-old Indian beach traveler wearing a floral summer dress and sun hat while walking along a tropical beach during sunset, realistic ocean waves, cinematic composition, ultra-HD.",
+            "A glamorous 28-year-old Indian influencer wearing a trendy oversized blazer with denim shorts and white sneakers, posing on a luxury rooftop café overlooking the city skyline, premium fashion editorial, DSLR, 8K realism."
+        ];
+
+        // Runtime Global States
+        let historyCollection = [];
+        let favoritesCollection = [];
+        let keyRegistry = {};
+        let activeAbortController = null;
+
+        // Custom Safe Cookie Helper Functions
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                let date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (encodeURIComponent(value) || "") + expires + "; path=/; SameSite=Lax";
+        }
+
+        function getCookie(name) {
+            let nameEQ = name + "=";
+            let ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+            }
+            return null;
+        }
+
+        // Initialize App Shell on DOM Load
+        window.onload = function() {
+            loadConfigData();
+            pingAllProviders();
+            lucide.createIcons();
+            
+            writeLog("Workspace initialized dynamically.", "success");
+            writeLog("Direct client connection via browser API configured.", "info");
+        };
+
+        // Initialize and Load Database configurations
+        function loadConfigData() {
+            // Theme settings
+            const savedTheme = localStorage.getItem('hub-theme') || 'dark';
+            document.body.setAttribute('data-theme', savedTheme);
+            const themeIcon = document.getElementById('theme-icon');
+            if (savedTheme === 'light') {
+                themeIcon.setAttribute('data-lucide', 'moon');
+            } else {
+                themeIcon.setAttribute('data-lucide', 'sun');
+            }
+
+            // Key Registry configuration (Loads your active key)
+            const savedKeys = localStorage.getItem('hub-keys');
+            if (savedKeys) {
+                keyRegistry = JSON.parse(savedKeys);
+            } else {
+                keyRegistry = {
+                    deepinfra: "2LPf0AJrV3sz43LoOwfJOBD9WaKx8CWN"
+                };
+                localStorage.setItem('hub-keys', JSON.stringify(keyRegistry));
+            }
+
+            if (!keyRegistry.deepinfra) {
+                keyRegistry.deepinfra = "2LPf0AJrV3sz43LoOwfJOBD9WaKx8CWN";
+                localStorage.setItem('hub-keys', JSON.stringify(keyRegistry));
+            }
+
+            // Sync Cache from Cookies fallback, or LocalStorage
+            const cookieHistory = getCookie('hub_cookie_history');
+            if (cookieHistory) {
+                try {
+                    // Try parsing cookie-based light structures
+                    historyCollection = JSON.parse(cookieHistory);
+                    writeLog("Image metadata recovered from Cookie storage cache.", "success");
+                } catch(e) {
+                    historyCollection = JSON.parse(localStorage.getItem('hub-history')) || [];
+                }
+            } else {
+                historyCollection = JSON.parse(localStorage.getItem('hub-history')) || [];
+            }
+            
+            favoritesCollection = JSON.parse(localStorage.getItem('hub-favorites')) || [];
+
+            // UI Render setup
+            populateProviderDropdowns();
+            renderProviderDashboard();
+            renderModelsView();
+            renderKeysManager();
+            renderHistoryUI();
+            renderFavoritesUI();
+            
+            lucide.createIcons();
+        }
+
+        // Write to Simulated Log Console
+        function writeLog(text, type = "info") {
+            const consoleBox = document.getElementById("terminal-console");
+            if (!consoleBox) return;
+
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            
+            const line = document.createElement("div");
+            line.className = `console-line ${type}`;
+            line.innerHTML = `<span class="time">[${timeStr}]</span> <span>${text}</span>`;
+            
+            consoleBox.appendChild(line);
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        // Show Global Toast Notifications
+        function showToast(message, type = "success") {
+            const container = document.getElementById("toast-container");
+            const toast = document.createElement("div");
+            toast.className = `toast ${type}`;
+            
+            let iconName = "info";
+            if (type === "success") iconName = "check-circle";
+            if (type === "error") iconName = "alert-octagon";
+            if (type === "warning") iconName = "alert-triangle";
+
+            toast.innerHTML = `<i data-lucide="${iconName}"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => toast.classList.add("show"), 10);
+            setTimeout(() => {
+                toast.classList.remove("show");
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Pick and inject a random prompt from dataset
+        function setRandomPrompt() {
+            const currentPrompt = document.getElementById("prompt").value;
+            let chosenPrompt = "";
+            
+            // Loop briefly to try to secure a different prompt than current
+            let attempts = 0;
+            do {
+                const randomIndex = Math.floor(Math.random() * RANDOM_PROMPTS.length);
+                chosenPrompt = RANDOM_PROMPTS[randomIndex];
+                attempts++;
+            } while (chosenPrompt === currentPrompt && attempts < 10);
+
+            document.getElementById("prompt").value = chosenPrompt;
+            showToast("Random prompt loaded!", "success");
+            writeLog("Injected a high-fidelity Indian-themed prompt into matrix.", "success");
+        }
+
+        // Tab Navigation
+        function switchTab(tabId) {
+            document.querySelectorAll(".workspace-content").forEach(el => el.classList.remove("active"));
+            document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+            
+            const targetContent = document.getElementById(tabId);
+            if (targetContent) {
+                targetContent.classList.add("active");
+            }
+            
+            const targetNav = document.querySelector(`.nav-item[data-target="${tabId}"]`);
+            if (targetNav) {
+                targetNav.classList.add("active");
+            }
+
+            document.getElementById("sidebar").classList.remove("open");
+            writeLog(`Viewport routed to target tab: ${tabId}`, "info");
+        }
+
+        // Toggle mobile responsive elements
+        function toggleSidebar() {
+            document.getElementById("sidebar").classList.toggle("open");
+        }
+
+        function toggleMobileControls() {
+            const panel = document.getElementById("control-panel");
+            const textEl = document.getElementById("mobile-trigger-text");
+            if (panel.classList.contains("collapsed")) {
+                panel.classList.remove("collapsed");
+                textEl.innerText = "Collapse Control Panel";
+            } else {
+                panel.classList.add("collapsed");
+                textEl.innerText = "Expand Control Panel";
+            }
+        }
+
+        // Toggle Theme Mode
+        function toggleTheme() {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', nextTheme);
+            localStorage.setItem('hub-theme', nextTheme);
+            
+            const themeIcon = document.getElementById('theme-icon');
+            if (nextTheme === 'light') {
+                themeIcon.setAttribute('data-lucide', 'moon');
+            } else {
+                themeIcon.setAttribute('data-lucide', 'sun');
+            }
+            lucide.createIcons();
+            showToast(`Theme changed to ${nextTheme}`, "info");
+        }
+
+        // Populate Provider Lists
+        function populateProviderDropdowns() {
+            const select = document.getElementById("provider-select");
+            if (!select) return;
+
+            select.innerHTML = "";
+            PROVIDERS_CONFIG.forEach(prov => {
+                const opt = document.createElement("option");
+                opt.value = prov.id;
+                opt.textContent = `${prov.name} ${prov.requiresKey ? '(Needs API Key)' : '(No Key)'}`;
+                select.appendChild(opt);
+            });
+
+            updateModelDropdown();
+        }
+
+        // Update Models list based on provider choice
+        function updateModelDropdown() {
+            const provSelect = document.getElementById("provider-select");
+            const modelSelect = document.getElementById("model-select");
+            if (!provSelect || !modelSelect) return;
+
+            const provId = provSelect.value;
+            const provider = PROVIDERS_CONFIG.find(p => p.id === provId);
+            modelSelect.innerHTML = "";
+
+            if (provider && provider.models) {
+                provider.models.forEach(model => {
+                    const opt = document.createElement("option");
+                    opt.value = model.id;
+                    opt.textContent = model.name;
+                    modelSelect.appendChild(opt);
+                });
+            }
+        }
+
+        // Dynamically adjust default render sizes
+        function adjustDimensions() {
+            const ratio = document.getElementById("aspect-ratio").value;
+            const w = document.getElementById("img-width");
+            const h = document.getElementById("img-height");
+            
+            if (ratio === "1:1") { w.value = 512; h.value = 512; }
+            else if (ratio === "16:9") { w.value = 768; h.value = 432; }
+            else if (ratio === "9:16") { w.value = 432; h.value = 768; }
+            else if (ratio === "4:3") { w.value = 640; h.value = 480; }
+        }
+
+        // Provider Dashboard Render
+        function renderProviderDashboard() {
+            const container = document.getElementById("providers-container");
+            if (!container) return;
+
+            container.innerHTML = "";
+            PROVIDERS_CONFIG.forEach(prov => {
+                const card = document.createElement("div");
+                card.className = "glass-panel provider-card";
+                card.id = `prov-card-${prov.id}`;
+                card.innerHTML = `
+                    <div class="provider-header">
+                        <div class="provider-title-wrap">
+                            <h3>${prov.name}</h3>
+                            <span class="provider-badge">${prov.badge}</span>
+                        </div>
+                        <div class="provider-status checking" id="status-indicator-${prov.id}"></div>
+                    </div>
+                    <div class="provider-meta-list">
+                        <div class="provider-meta-item">
+                            <span>Key Required:</span>
+                            <span>${prov.requiresKey ? 'Yes' : 'No'}</span>
+                        </div>
+                        <div class="provider-meta-item">
+                            <span>Avg. Speed:</span>
+                            <span>${prov.speed}</span>
+                        </div>
+                        <div class="provider-meta-item">
+                            <span>Limitations:</span>
+                            <span>${prov.limits}</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top: auto;">
+                        <a href="${prov.docLink}" target="_blank" class="btn-secondary" style="flex-grow:1; text-decoration:none; text-align:center; padding: 8px; font-size:0.8rem;">Docs</a>
+                        <button class="btn-primary" style="flex-grow:1; padding: 8px; font-size:0.8rem;" onclick="testSingleProvider('${prov.id}')">Test Ping</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Key configurations integration screen
+        function renderKeysManager() {
+            const container = document.getElementById("keys-manager-panel");
+            if (!container) return;
+
+            container.innerHTML = `
+                <h3 style="margin-bottom:8px;">Keys Integration Panel</h3>
+                <p style="color:var(--text-secondary); font-size: 0.95rem; margin-bottom:16px;">
+                    Provide keys to fetch image generation configurations. Leave them blank if you only plan on using Pollinations AI.
+                </p>
+            `;
+
+            PROVIDERS_CONFIG.forEach(prov => {
+                if (!prov.requiresKey) return;
+
+                const keyVal = keyRegistry[prov.id] || "";
+                const row = document.createElement("div");
+                row.className = "key-row";
+                row.innerHTML = `
+                    <div class="row-header">
+                        <label style="font-weight:700;">${prov.keyEnvName || prov.name}</label>
+                        <a href="${prov.docLink}" target="_blank" style="font-size:0.75rem; color:var(--accent-secondary); text-decoration:none;">Get Key</a>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <input type="password" id="key-input-${prov.id}" value="${keyVal}" placeholder="Enter secret API key token here..." class="glass-card" style="flex-grow:1;">
+                        <button class="btn-secondary" style="padding:10px 12px;" onclick="saveSingleKey('${prov.id}')">Save</button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function saveSingleKey(provId) {
+            const inputVal = document.getElementById(`key-input-${provId}`).value.trim();
+            keyRegistry[provId] = inputVal;
+            localStorage.setItem("hub-keys", JSON.stringify(keyRegistry));
+            showToast(`${PROVIDERS_CONFIG.find(p => p.id === provId).name} key saved locally!`, "success");
+            writeLog(`API credentials altered: ${provId}`, "success");
+            pingAllProviders();
+        }
+
+        // Ping individual API interfaces
+        async function testSingleProvider(provId) {
+            const indicator = document.getElementById(`status-indicator-${provId}`);
+            if (indicator) {
+                indicator.className = "provider-status checking";
+            }
+
+            try {
+                if (provId === "pollinations") {
+                    const res = await fetch("https://image.pollinations.ai/", { method: "HEAD" });
+                    if (res.status >= 200 && res.status < 400) {
+                        indicator.className = "provider-status online";
+                        writeLog(`Pollinations AI is Online (Code: ${res.status})`, "success");
+                    } else {
+                        throw new Error(`Invalid code: ${res.status}`);
+                    }
+                } else {
+                    const savedKey = keyRegistry[provId];
+                    if (!savedKey) {
+                        indicator.className = "provider-status offline";
+                        writeLog(`Status unknown: Missing required API key for ${provId}`, "warn");
+                        return;
+                    }
+                    indicator.className = "provider-status online";
+                    writeLog(`Credentials detected for ${provId}. Connection initialized successfully.`, "success");
+                }
+            } catch (err) {
+                indicator.className = "provider-status offline";
+                writeLog(`Ping failed for ${provId}: ${err.message}`, "error");
+            }
+        }
+
+        function pingAllProviders() {
+            writeLog("Triggering global health verification sequences...", "info");
+            PROVIDERS_CONFIG.forEach(prov => {
+                testSingleProvider(prov.id);
+            });
+        }
+
+        // Render model browser page view
+        function renderModelsView() {
+            const container = document.getElementById("models-container");
+            const providerFilter = document.getElementById("model-filter-provider");
+            if (!container || !providerFilter) return;
+
+            container.innerHTML = "";
+            providerFilter.innerHTML = '<option value="all">All Providers</option>';
+
+            PROVIDERS_CONFIG.forEach(prov => {
+                const opt = document.createElement("option");
+                opt.value = prov.id;
+                opt.textContent = prov.name;
+                providerFilter.appendChild(opt);
+
+                prov.models.forEach(model => {
+                    const card = document.createElement("div");
+                    card.className = "glass-panel model-card";
+                    card.setAttribute("data-provider", prov.id);
+                    card.setAttribute("data-model-name", model.name.toLowerCase());
+                    card.innerHTML = `
+                        <span class="model-badge">${prov.name}</span>
+                        <h3 style="margin-top:12px; font-size: 1.05rem;">${model.name}</h3>
+                        <p style="color:var(--text-secondary); font-size:0.8rem; margin-top:4px;">${model.style}</p>
+                        <button class="btn-primary" style="margin-top:12px; font-size:0.8rem; padding: 6px 12px;" onclick="loadModelToDashboard('${prov.id}', '${model.id}')">
+                            <i data-lucide="play" style="width:12px; height:12px;"></i> Use Model
+                        </button>
+                    `;
+                    container.appendChild(card);
+                });
+            });
+            lucide.createIcons();
+        }
+
+        function loadModelToDashboard(provId, modelId) {
+            const provSelect = document.getElementById("provider-select");
+            if (provSelect) {
+                provSelect.value = provId;
+                updateModelDropdown();
+                const modelSelect = document.getElementById("model-select");
+                if (modelSelect) {
+                    modelSelect.value = modelId;
+                }
+                switchTab('dashboard');
+                showToast(`Loaded ${provId}:${modelId} to active workspace.`, "info");
+            }
+        }
+
+        function filterModels() {
+            const query = document.getElementById("model-search").value.toLowerCase();
+            const provider = document.getElementById("model-filter-provider").value;
+            const cards = document.querySelectorAll(".model-card");
+
+            cards.forEach(card => {
+                const cardProv = card.getAttribute("data-provider");
+                const cardName = card.getAttribute("data-model-name");
+
+                const provMatch = (provider === "all" || cardProv === provider);
+                const queryMatch = cardName.includes(query);
+
+                if (provMatch && queryMatch) {
+                    card.style.display = "flex";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        }
+
+        // Active State Manager for Generation Trigger UI
+        function setGeneratingState(isGenerating) {
+            const btn = document.getElementById("generate-btn");
+            if (!btn) return;
+
+            if (isGenerating) {
+                btn.innerHTML = `<i data-lucide="square"></i> <span>Stop Generation</span>`;
+                btn.classList.add("btn-danger");
+                btn.classList.remove("btn-primary");
+                btn.setAttribute("onclick", "abortActiveGeneration()");
+            } else {
+                btn.innerHTML = `<i data-lucide="play"></i> <span>Generate batch</span>`;
+                btn.classList.remove("btn-danger");
+                btn.classList.add("btn-primary");
+                btn.setAttribute("onclick", "executeGeneration()");
+            }
+            lucide.createIcons();
+        }
+
+        function abortActiveGeneration() {
+            if (activeAbortController) {
+                activeAbortController.abort();
+                writeLog("Batch generation task stopped by user.", "warn");
+                showToast("Generation cancelled.", "warning");
+            }
+            setGeneratingState(false);
+        }
+
+        // Execute batch rendering asynchronously in parallel
+        async function executeGeneration() {
+            const prompt = document.getElementById("prompt").value.trim();
+            if (!prompt) {
+                showToast("Write a prompt first!", "error");
+                return;
+            }
+
+            const providerId = document.getElementById("provider-select").value;
+            const modelId = document.getElementById("model-select").value;
+            const width = document.getElementById("img-width").value;
+            const height = document.getElementById("img-height").value;
+            const format = document.getElementById("output-format").value;
+            const imageCount = parseInt(document.getElementById("image-count").value) || 1;
+            let baseSeed = parseInt(document.getElementById("gen-seed").value);
+
+            const canvas = document.getElementById("render-sandbox");
+            canvas.innerHTML = `<div class="gallery-grid" id="batch-gallery-grid"></div>`;
+            const galleryGrid = document.getElementById("batch-gallery-grid");
+
+            // Setup skeletons dynamically for each batch element
+            const itemsToProcess = [];
+            for (let i = 0; i < imageCount; i++) {
+                const subSeed = (baseSeed === -1 || isNaN(baseSeed)) ? Math.floor(Math.random() * 9999999) : (baseSeed + i);
+                const itemCardId = `batch-item-card-${i}`;
+                
+                // Render Skeleton
+                const skeleton = document.createElement("div");
+                skeleton.className = "batch-skeleton";
+                skeleton.id = itemCardId;
+                skeleton.innerHTML = `
+                    <div class="spinner-loader"></div>
+                    <div style="font-size:0.8rem; color:var(--text-secondary);">Image #${i+1}</div>
+                    <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">Seed: ${subSeed}</div>
+                `;
+                galleryGrid.appendChild(skeleton);
+
+                itemsToProcess.push({
+                    cardId: itemCardId,
+                    seed: subSeed,
+                    index: i
+                });
+            }
+
+            writeLog(`Processing Batch request. Target Count: ${imageCount} | Engine: ${providerId}`, "info");
+
+            if (activeAbortController) activeAbortController.abort();
+            activeAbortController = new AbortController();
+            setGeneratingState(true);
+
+            // Execute concurrent rendering tasks
+            const taskPromises = itemsToProcess.map(task => {
+                return renderSingleBatchImage(providerId, modelId, prompt, width, height, task.seed, task.cardId, activeAbortController.signal);
+            });
+
+            try {
+                await Promise.all(taskPromises);
+                showToast("Batch generated successfully!", "success");
+            } catch (err) {
+                writeLog(`Batch execution warning/halt: ${err.message}`, "warn");
+            } finally {
+                activeAbortController = null;
+                setGeneratingState(false);
+            }
+        }
+
+        // Render single frame asynchronously inside its skeleton container
+        async function renderSingleBatchImage(providerId, modelId, prompt, width, height, seed, cardId, signal) {
+            const cardEl = document.getElementById(cardId);
+            if (!cardEl) return;
+
+            const startTime = Date.now();
+
+            try {
+                let finalImageUrl = "";
+
+                if (providerId === "pollinations") {
+                    const endpoint = `https://image.pollinations.ai/p/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=${modelId}`;
+                    const completed = await checkImageCompleteness(endpoint, signal);
+                    if (completed) {
+                        finalImageUrl = endpoint;
+                    } else {
+                        throw new Error("Render pipeline timed out.");
+                    }
+                } else if (providerId === "deepinfra") {
+                    const savedKey = keyRegistry.deepinfra;
+                    if (!savedKey) {
+                        throw new Error("Missing Deepinfra API Key! Go to API Keys tab.");
+                    }
+
+                    const deepinfraEndpoint = "https://api.deepinfra.com/v1/openai/images/generations";
+                    const payload = {
+                        prompt: prompt,
+                        model: modelId,
+                        n: 1,
+                        size: "1024x1024" // Optimal Deepinfra sizing limits
+                    };
+
+                    const response = await fetchWithRetry(deepinfraEndpoint, {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${savedKey}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(payload),
+                        signal: signal
+                    });
+
+                    const data = await response.json();
+                    if (data.data && data.data[0]) {
+                        finalImageUrl = data.data[0].url || `data:image/png;base64,${data.data[0].b64_json}`;
+                    } else if (data.error) {
+                        throw new Error(data.error.message || JSON.stringify(data.error));
+                    } else {
+                        throw new Error("Deepinfra output parsing fail.");
+                    }
+                }
+
+                if (!finalImageUrl) throw new Error("Render returned empty frame.");
+
+                const genDuration = ((Date.now() - startTime) / 1000).toFixed(2);
+                writeLog(`Batch component [Seed: ${seed}] successfully compiled in ${genDuration}s`, "success");
+
+                const itemData = {
+                    id: `gen-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+                    prompt: prompt,
+                    provider: providerId,
+                    model: modelId,
+                    seed: seed,
+                    resolution: `${width}x${height}`,
+                    duration: genDuration,
+                    url: finalImageUrl,
+                    timestamp: new Date().toISOString(),
+                    favorite: false
+                };
+
+                // Add to persistent caches
+                saveToHistoryCache(itemData);
+
+                // Render finalized graphics into skeleton spot
+                cardEl.className = "glass-panel image-card";
+                cardEl.innerHTML = `
+                    <img src="${itemData.url}" alt="${prompt}">
+                    <div class="image-overlay" style="opacity: 1;">
+                        <p style="font-weight:700; font-size:0.75rem; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${prompt}</p>
+                        <span class="image-meta">Seed: ${seed} | Time: ${genDuration}s</span>
+                        <div class="image-info-row">
+                            <div class="image-actions">
+                                <button onclick="zoomSandboxImage('${itemData.url}')"><i data-lucide="maximize-2" style="width:12px; height:12px;"></i></button>
+                                <button onclick="downloadResource('${itemData.url}', 'batch-${seed}.png')"><i data-lucide="download" style="width:12px; height:12px;"></i></button>
+                                <button onclick="toggleFavoriteState('${itemData.id}', this)"><i data-lucide="heart" style="width:12px; height:12px;"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons();
+
+            } catch (err) {
+                writeLog(`Error in Batch segment [Seed: ${seed}]: ${err.message}`, "error");
+                cardEl.className = "glass-panel";
+                cardEl.style.padding = "12px";
+                cardEl.style.display = "flex";
+                cardEl.style.flexDirection = "column";
+                cardEl.style.alignItems = "center";
+                cardEl.style.justifyContent = "center";
+                cardEl.innerHTML = `
+                    <i data-lucide="alert-octagon" style="color:var(--error); width:28px; height:28px;"></i>
+                    <p style="font-size:0.75rem; color:var(--error); margin-top:8px; text-align:center;">${err.message}</p>
+                `;
+                lucide.createIcons();
+            }
+        }
+
+        // Save history inside secure Cookie fallback or LocalStorage
+        function saveToHistoryCache(item) {
+            historyCollection.unshift(item);
+
+            // Maintain max 50 items in LocalStorage to optimize responsiveness
+            if (historyCollection.length > 50) {
+                historyCollection.pop();
+            }
+
+            // Standardize fallback LocalStorage persistence
+            localStorage.setItem("hub-history", JSON.stringify(historyCollection));
+
+            // Sync with browser cookies: Cookie has 4KB limit. We only save a compressed payload list (last 6 items).
+            // We omit giant Base64 strings from cookie payloads completely to prevent browser page limits breakage.
+            const compressedList = historyCollection.slice(0, 6).map(item => ({
+                id: item.id,
+                prompt: item.prompt.substring(0, 40) + "...",
+                provider: item.provider,
+                model: item.model,
+                seed: item.seed,
+                resolution: item.resolution,
+                url: item.url.startsWith("data:") ? "base64_payload" : item.url // Save only live remote asset URLs
+            }));
+
+            try {
+                setCookie("hub_cookie_history", JSON.stringify(compressedList), 7);
+            } catch(e) {
+                writeLog("Sync warning: Cookie limit exceeded. Local browser storage used dynamically.", "warn");
+            }
+
+            renderHistoryUI();
+        }
+
+        // HTTP Fetch execution protocol wrapper
+        async function fetchWithRetry(url, options = {}, retries = 3, delay = 1000) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    const errMsg = await response.text();
+                    throw new Error(`(${response.status}) Info: ${errMsg || response.statusText}`);
+                }
+                return response;
+            } catch (error) {
+                if (retries > 0 && error.name !== "AbortError") {
+                    writeLog(`Transport failure. Retrying batch component...`, "warn");
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithRetry(url, options, retries - 1, delay * 2);
+                }
+                throw error;
+            }
+        }
+
+        // Image completeness checker
+        function checkImageCompleteness(url, signal) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
+                img.src = url;
+                if (signal) {
+                    signal.addEventListener('abort', () => {
+                        img.src = "";
+                        resolve(false);
+                    });
+                }
+            });
+        }
+
+        // Fullscreen Modal trigger
+        function zoomSandboxImage(url) {
+            const modal = document.getElementById("image-modal");
+            const modalImg = document.getElementById("modal-img");
+            if (modal && modalImg) {
+                modalImg.src = url;
+                modal.style.display = "flex";
+            }
+        }
+
+        function closeModal() {
+            document.getElementById("image-modal").style.display = "none";
+        }
+
+        // Universal Resource Downloader
+        function downloadResource(url, filename) {
+            if (url.startsWith('data:') || url.startsWith('blob:')) {
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                return;
+            }
+
+            fetch(url, { mode: 'cors' })
+                .then(response => response.blob())
+                .then(blob => {
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(blobUrl);
+                })
+                .catch(() => window.open(url, '_blank'));
+        }
+
+        // Toggle Favorites directory
+        function toggleFavoriteState(id, btnElement) {
+            let item = historyCollection.find(h => h.id === id);
+            if (!item) {
+                item = favoritesCollection.find(f => f.id === id);
+            }
+
+            if (!item) return;
+            item.favorite = !item.favorite;
+
+            if (item.favorite) {
+                if (!favoritesCollection.some(f => f.id === id)) {
+                    favoritesCollection.push(item);
+                }
+                showToast("Added item to favorites catalog.", "success");
+                if (btnElement) {
+                    btnElement.style.color = "#ef4444";
+                    btnElement.innerHTML = `<i data-lucide="heart" style="fill:#ef4444; width:12px; height:12px;"></i>`;
+                }
+            } else {
+                favoritesCollection = favoritesCollection.filter(f => f.id !== id);
+                showToast("Removed from favorites catalog.", "info");
+                if (btnElement) {
+                    btnElement.style.color = "white";
+                    btnElement.innerHTML = `<i data-lucide="heart" style="width:12px; height:12px;"></i>`;
+                }
+            }
+
+            localStorage.setItem("hub-history", JSON.stringify(historyCollection));
+            localStorage.setItem("hub-favorites", JSON.stringify(favoritesCollection));
+
+            renderHistoryUI();
+            renderFavoritesUI();
+            lucide.createIcons();
+        }
+
+        // Remove item from database
+        function deleteHistoryItem(id) {
+            historyCollection = historyCollection.filter(h => h.id !== id);
+            favoritesCollection = favoritesCollection.filter(f => f.id !== id);
+            
+            localStorage.setItem("hub-history", JSON.stringify(historyCollection));
+            localStorage.setItem("hub-favorites", JSON.stringify(favoritesCollection));
+
+            renderHistoryUI();
+            renderFavoritesUI();
+            showToast("Item purged successfully.", "info");
+        }
+
+        // Render History Grid List
+        function renderHistoryUI() {
+            const container = document.getElementById("history-gallery");
+            if (!container) return;
+
+            if (historyCollection.length === 0) {
+                container.innerHTML = `
+                    <div class="output-placeholder" style="grid-column: 1/-1;">
+                        <i data-lucide="history"></i>
+                        <h3>History Archive Empty</h3>
+                        <p>Begin generating to fill up your local device cache storage directory.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = "";
+            historyCollection.forEach(item => {
+                const card = document.createElement("div");
+                card.className = "glass-panel image-card";
+                card.innerHTML = `
+                    <img src="${item.url}" alt="${item.prompt}">
+                    <div class="image-overlay">
+                        <p style="font-weight:700; font-size:0.8rem; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${item.prompt}</p>
+                        <span class="image-meta" style="font-size:0.65rem;">Engine: ${item.provider}</span>
+                        <div class="image-info-row">
+                            <div class="image-actions">
+                                <button onclick="zoomSandboxImage('${item.url}')"><i data-lucide="maximize-2" style="width:12px; height:12px;"></i></button>
+                                <button onclick="downloadResource('${item.url}', 'ai-generation-${item.seed}.png')"><i data-lucide="download" style="width:12px; height:12px;"></i></button>
+                                <button onclick="toggleFavoriteState('${item.id}', this)" style="color: ${item.favorite ? '#ef4444' : 'white'}">
+                                    <i data-lucide="heart" style="width:12px; height:12px; ${item.favorite ? 'fill:#ef4444' : ''}"></i>
+                                </button>
+                                <button onclick="deleteHistoryItem('${item.id}')" style="background:rgba(239, 68, 68, 0.2);"><i data-lucide="trash-2" style="width:12px; height:12px;"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        // Render Favorites Grid List
+        function renderFavoritesUI() {
+            const container = document.getElementById("favorites-gallery");
+            if (!container) return;
+
+            if (favoritesCollection.length === 0) {
+                container.innerHTML = `
+                    <div class="output-placeholder" style="grid-column: 1/-1;">
+                        <i data-lucide="heart"></i>
+                        <h3>No Favorited Elements Saved</h3>
+                        <p>Bookmark high-quality generated assets to show them here instantly.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = "";
+            favoritesCollection.forEach(item => {
+                const card = document.createElement("div");
+                card.className = "glass-panel image-card";
+                card.innerHTML = `
+                    <img src="${item.url}" alt="${item.prompt}">
+                    <div class="image-overlay">
+                        <p style="font-weight:700; font-size:0.8rem; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${item.prompt}</p>
+                        <span class="image-meta" style="font-size:0.65rem;">Engine: ${item.provider}</span>
+                        <div class="image-info-row">
+                            <div class="image-actions">
+                                <button onclick="zoomSandboxImage('${item.url}')"><i data-lucide="maximize-2" style="width:12px; height:12px;"></i></button>
+                                <button onclick="downloadResource('${item.url}', 'ai-generation-${item.seed}.png')"><i data-lucide="download" style="width:12px; height:12px;"></i></button>
+                                <button onclick="toggleFavoriteState('${item.id}', null)"><i data-lucide="heart-off" style="width:12px; height:12px;"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        // Purge History, Cookies and LocalStorage safely
+        function clearAllHistory() {
+            if (confirm("Are you sure you want to permanently clear all generated images from your local cache & cookies?")) {
+                historyCollection = [];
+                localStorage.setItem("hub-history", JSON.stringify(historyCollection));
+                setCookie("hub_cookie_history", "", -1); // Expire cookie instantly
+                renderHistoryUI();
+                showToast("Sandbox history, local cache & cookies cleared successfully.", "info");
+                writeLog("Cache & Cookies purged completely.", "warn");
+            }
+        }
+
+        // Reset dashboard configurations
+        function clearDashboardConfig() {
+            document.getElementById("prompt").value = "";
+            document.getElementById("negative_prompt").value = "";
+            document.getElementById("gen-seed").value = "-1";
+            document.getElementById("image-count").value = "1";
+            showToast("Reset workspace parameters.", "info");
+        }
+    </script>
+</body>
+</html>
